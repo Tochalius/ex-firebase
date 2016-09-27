@@ -1,0 +1,32 @@
+{
+  "name": "keboola-ex-firebase",
+  "version": "1.0.0",
+  "description": "A Firebase extractor for Keboola Connection",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/radektomasek/keboola-ex-firebase.git"
+  },
+  "keywords": [
+    "Keboola",
+    "Firebase",
+    "Extractor"
+  ],
+  "author": "Radek Tomasek <radek.tomasek@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/radektomasek/keboola-ex-firebase/issues"
+  },
+  "homepage": "https://github.com/radektomasek/keboola-ex-firebase#readme",
+  "devDependencies": {
+    "babel-cli": "^6.14.0",
+    "babel-core": "^6.14.0",
+    "babel-loader": "^6.2.5",
+    "babel-preset-es2015": "^6.14.0",
+    "babel-preset-stage-0": "^6.5.0"
+  },
+  "dependencies": {
+    "babel-polyfill": "^6.13.0"
+  }
+}
