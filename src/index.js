@@ -22,14 +22,15 @@ import { CONFIG_FILE, DEFAULT_TABLES_OUT_DIR } from './constants';
     const {
       apiKey,
       domain,
-      endpoint
+      endpoint,
+      bucketName
     } = await parseConfiguration(getConfig(path.join(command.data, CONFIG_FILE)));
     const tableOutDir = path.join(command.data, DEFAULT_TABLES_OUT_DIR);
     const data = await fetchData({ apiKey, domain, endpoint });
     if (!isNull(data)) {
       const events = groupDataByEventType(flatten(prepareDataForOutput(data)));
       const result = await Promise.all(generateOutputFiles(tableOutDir, events));
-      const manifests = await Promise.all(generateOutputManifests(tableOutDir, events));
+      const manifests = await Promise.all(generateOutputManifests(tableOutDir, bucketName, events));
     }
     console.log('Data downloaded!');
     process.exit(0);

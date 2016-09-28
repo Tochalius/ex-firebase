@@ -12,4 +12,5 @@ Configuration is very straightforward and deeply described below.
       "#apiKey": "some Firebase api key",
       "domain": "domain name in bare form",
       "endpoint": "name of the endpoint"
+      "bucketName": "name of the bucket"
     }

@@ -23,8 +23,13 @@ export function parseConfiguration(configObject) {
     if (!endpoint) {
       reject('Parameter endpoint is not defined! Please check out the documentation for more information!');
     }
+    // Read bucketName
+    const bucketName = configObject.get('parameters:bucketName');
+    if (!bucketName) {
+      reject('Parameter bucketName is not defined! Please check out the documentation for more information!');
+    }
 
-    resolve({ apiKey, domain, endpoint });
+    resolve({ apiKey, domain, endpoint, bucketName });
   });
 }
 
@@ -32,9 +37,9 @@ export function parseConfiguration(configObject) {
  * This function prepares object containing metadata required for writing
  * output data into Keboola (output files & manifests).
  */
-export function getKeboolaStorageMetadata(tableOutDir, tableName) {
+export function getKeboolaStorageMetadata(tableOutDir, bucketName, tableName) {
   const incremental = IS_INCREMENTAL;
-  const destination = `${tableName}`;
+  const destination = `${bucketName}.${tableName}`;
   const fileName = `${tableOutDir}/${tableName}.csv`;
   const manifestFileName = `${fileName}.manifest`;
   return { fileName, incremental, destination, manifestFileName };
