@@ -1,5 +1,11 @@
 'use strict';
-import { IS_INCREMENTAL } from '../constants';
+import {
+  isNumber
+} from 'lodash';
+import {
+  IS_INCREMENTAL,
+  DEFAULT_PAGE_SIZE
+} from '../constants';
 
 /**
  * This is a simple helper that checks whether the input configuration is valid.
@@ -29,7 +35,12 @@ export function parseConfiguration(configObject) {
       reject('Parameter bucketName is not defined! Please check out the documentation for more information!');
     }
 
-    resolve({ apiKey, domain, endpoint, bucketName });
+    resolve({
+      apiKey,
+      domain,
+      endpoint,
+      bucketName
+    });
   });
 }
 

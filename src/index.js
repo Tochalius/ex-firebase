@@ -1,10 +1,14 @@
 import path from 'path';
+import firebase from 'firebase';
 import command from './helpers/cliHelper';
-import { isNull, flatten } from 'lodash';
+import { isNull, flatten, size } from 'lodash';
 import { getConfig } from './helpers/configHelper';
 import { parseConfiguration } from './helpers/keboolaHelper';
 import {
   fetchData,
+  authorization,
+  dataValidation,
+  applyPagination,
   generateOutputFiles,
   prepareDataForOutput,
   groupDataByEventType,
@@ -28,6 +32,9 @@ import { CONFIG_FILE, DEFAULT_TABLES_OUT_DIR } from './constants';
     console.log('Configuration parsed');
     const tableOutDir = path.join(command.data, DEFAULT_TABLES_OUT_DIR);
     const data = await fetchData({ apiKey, domain, endpoint });
+    console.log(size(Object.keys(data)));
+    // const validKeys = [];
+    // const validData = dataValidation(data, ['eventId','eventType','raised','intervall','idKey','idValue','data']);
     console.log('Data fetched');
     if (!isNull(data)) {
       const events = groupDataByEventType(flatten(prepareDataForOutput(data)));

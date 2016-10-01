@@ -5,6 +5,9 @@ import moment from 'moment';
 import isThere from 'is-there';
 import request from 'request-promise';
 import jsonfile from 'jsonfile';
+import { initializeApp } from 'firebase';
+import FirebasePaginator from 'firebase-paginator';
+import { getKeboolaStorageMetadata } from './keboolaHelper';
 import {
   size,
   first,
@@ -12,19 +15,48 @@ import {
   isArray,
   replace,
   isNumber,
-  toString
+  toString,
+  includes
 } from 'lodash';
 import {
   EVENT_ERROR,
   EVENT_FINISH
 } from '../constants';
-import { getKeboolaStorageMetadata } from './keboolaHelper';
+
+/**
+ * This function make the authorization to the Firebase.
+ */
+export function authorization({ apiKey, authDomain, databaseURL, storageBucket }) {
+  return firebase.initializeApp({
+    databaseURL,
+    serviceAccount: ""
+  });
+}
+
+/**
+ * This function applies the pagination for the Firebase.io reference
+ */
+export function applyPagination(ref, pageSize) {
+  return new FirebasePaginator(ref, { pageSize });
+}
+
 
 /**
  * This function request and endpoint and returns data for the further processing.
  */
 export function fetchData({ apiKey, domain, endpoint }) {
   return request({ uri: `https://${domain}.firebaseio.com/${endpoint}.json?auth=${apiKey}`, json: true });
+}
+
+/**
+ * This function read the valid data.
+ */
+export function dataValidation(data, validKeys) {
+  return data.filter(element => {
+    Object.keys(element)
+
+
+  });
 }
 
 /**
