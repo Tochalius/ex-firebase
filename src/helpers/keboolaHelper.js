@@ -3,6 +3,7 @@ import {
   isNumber
 } from 'lodash';
 import {
+  DEFAULT_BATCH,
   IS_INCREMENTAL,
   DEFAULT_PAGE_SIZE
 } from '../constants';
@@ -34,12 +35,57 @@ export function parseConfiguration(configObject) {
     if (!bucketName) {
       reject('Parameter bucketName is not defined! Please check out the documentation for more information!');
     }
+    // Read the authDomain parameter
+    const authDomain = configObject.get('parameters:authDomain');
+    if (!authDomain) {
+      reject('Parameter authDomain is not defined! Please check out the documentation for more information!');
+    }
+    // Read the databaseURL parameter
+    const databaseURL = configObject.get('parameters:databaseURL');
+    if (!databaseURL) {
+      reject('Parameter databaseURL is not defined! Please check out the documentation for more information!');
+    }
+    // Read the storageBucket parameter
+    const storageBucket = configObject.get('parameters:storageBucket');
+    if (!storageBucket) {
+      reject('Parameter storageBucket is not defined! Please check out the documentation for more information!');
+    }
+    // Read page size
+    const pageSize = configObject.get('parameters:pageSize') || DEFAULT_PAGE_SIZE;
+    if (!isNumber(pageSize)) {
+      reject('Invalid pageSize parameter! Please make sure there is a numeric value!');
+    }
+
+    // Read clientEmail
+    const clientEmail = configObject.get('parameters:clientEmail');
+    if (!clientEmail) {
+      reject('Parameter clientEmail is not specified! Check out the documentation for more details!');
+    }
+
+    // Read privateKey
+    const privateKey = configObject.get('parameters:#privateKey');
+    if (!privateKey) {
+      reject('Parameter privateKey is not specified! Check out the documentation for more details!');
+    }
+
+    // Read batch
+    const batch = configObject.get('parameters:batch') || DEFAULT_BATCH;
+    if (!batch.match(/firstHalf|secondHalf/)) {
+      reject('Invalid value of the parameter batch. Please specify either firstHalf or secondHalf');
+    }
 
     resolve({
+      batch,
       apiKey,
       domain,
       endpoint,
-      bucketName
+      pageSize,
+      privateKey,
+      authDomain,
+      bucketName,
+      clientEmail,
+      databaseURL,
+      storageBucket
     });
   });
 }

@@ -24,39 +24,41 @@ import {
 } from '../constants';
 
 /**
- * This function make the authorization to the Firebase.
+ * This function pass query for the Firebase and returns promise.
  */
-export function authorization({ apiKey, authDomain, databaseURL, storageBucket }) {
-  return firebase.initializeApp({
-    databaseURL,
-    serviceAccount: ""
-  });
+export function getFirebasePromise(query) {
+  return query.once('value');
 }
 
 /**
- * This function applies the pagination for the Firebase.io reference
+ * This function loop throught database and generate array of promises
+ * which will be used later.
  */
-export function applyPagination(ref, pageSize) {
-  return new FirebasePaginator(ref, { pageSize });
+export function generateArrayOfPromises(pageCount, pageSize, keys, ref) {
+  const promises = [];
+  for (let i = 0; i < pageCount; i++) {
+    const key = keys[i * pageSize];
+    const promise = getFirebasePromise(ref.orderByKey().limitToFirst(pageSize).startAt(key));
+    promises.push(promise);
+  }
+  return promises;
 }
 
+/**
+ * This function make the authorization to the Firebase.
+ */
+export function authorization({  databaseURL, domain, clientEmail, privateKey }) {
+  return initializeApp({
+    databaseURL,
+    serviceAccount: { privateKey, clientEmail,  projectId: domain }
+  });
+}
 
 /**
  * This function request and endpoint and returns data for the further processing.
  */
-export function fetchData({ apiKey, domain, endpoint }) {
-  return request({ uri: `https://${domain}.firebaseio.com/${endpoint}.json?auth=${apiKey}`, json: true });
-}
-
-/**
- * This function read the valid data.
- */
-export function dataValidation(data, validKeys) {
-  return data.filter(element => {
-    Object.keys(element)
-
-
-  });
+export function fetchFirebaseIds({ apiKey, domain, endpoint }) {
+  return request({ uri: `https://${domain}.firebaseio.com/${endpoint}.json?shallow=true&auth=${apiKey}`, json: true });
 }
 
 /**
@@ -144,7 +146,7 @@ export function prepareDataForOutput(data) {
 export function getParentData(object) {
   return Object.keys(object).reduce((previous, current) => {
     if (!isArray(object[current])) {
-      return { ...previous, [ current ] : convertEpochToDateIfAvailable(object[current]) };
+      return { ...previous, [ current ] : object[current] };
     }
   }, {});
 }

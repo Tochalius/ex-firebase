@@ -5,6 +5,7 @@ export const DEFAULT_PAGE_SIZE = 15;
 export const DEFAULT_DATA_DIR = '/data';
 export const DEFAULT_TABLES_IN_DIR = '/in/tables';
 export const DEFAULT_TABLES_OUT_DIR = '/out/tables';
+export const DEFAULT_BATCH = 'firstHalf';
 
 // event constants
 export const EVENT_FINISH = 'finish';

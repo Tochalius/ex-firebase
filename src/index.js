@@ -1,21 +1,23 @@
 import path from 'path';
 import firebase from 'firebase';
 import command from './helpers/cliHelper';
-import { isNull, flatten, size } from 'lodash';
+import { isNull, flatten } from 'lodash';
 import { getConfig } from './helpers/configHelper';
 import { parseConfiguration } from './helpers/keboolaHelper';
 import {
-  fetchData,
   authorization,
   dataValidation,
   applyPagination,
+  fetchFirebaseIds,
+  getFirebasePromise,
   generateOutputFiles,
   prepareDataForOutput,
   groupDataByEventType,
+  generateArrayOfPromises,
   generateOutputManifests,
   convertArrayOfObjectsIntoObject
 } from './helpers/firebaseHelper';
-import { CONFIG_FILE, DEFAULT_TABLES_OUT_DIR } from './constants';
+import { CONFIG_FILE, DEFAULT_TABLES_OUT_DIR, DEFAULT_BATCH } from './constants';
 
 /**
  * This is the main part of the program.
@@ -24,25 +26,42 @@ import { CONFIG_FILE, DEFAULT_TABLES_OUT_DIR } from './constants';
   try {
     // Reading of the input configuration.
     const {
+      batch,
       apiKey,
       domain,
       endpoint,
-      bucketName
+      pageSize,
+      privateKey,
+      authDomain,
+      bucketName,
+      clientEmail,
+      databaseURL,
+      storageBucket
     } = await parseConfiguration(getConfig(path.join(command.data, CONFIG_FILE)));
-    console.log('Configuration parsed');
+    // connection with the firebase.
+    // const firebase = applyPagination(authorization({ apiKey, authDomain, databaseURL, storageBucket }), pageSize, apiKey);
+    const db = authorization({ databaseURL, domain, clientEmail, privateKey }).database();
+    const ref = db.ref(`${endpoint}`);
     const tableOutDir = path.join(command.data, DEFAULT_TABLES_OUT_DIR);
-    const data = await fetchData({ apiKey, domain, endpoint });
-    console.log(size(Object.keys(data)));
-    // const validKeys = [];
-    // const validData = dataValidation(data, ['eventId','eventType','raised','intervall','idKey','idValue','data']);
-    console.log('Data fetched');
-    if (!isNull(data)) {
-      const events = groupDataByEventType(flatten(prepareDataForOutput(data)));
+    // We should read all available keys from Firebase. This will help us with the pagination.
+    const firebaseIds = await fetchFirebaseIds({ apiKey, domain, endpoint });
+    const keys = Object.keys(firebaseIds).sort();
+    const pageCount = keys.length / pageSize;
+    const promises = generateArrayOfPromises(pageCount, pageSize, keys, ref);
+    const half = promises.length / 2;
+    const slicedPromises = batch === DEFAULT_BATCH ? promises.slice(0, half) : promises.slice(half);
+    for (const promise of slicedPromises) {
+      const data = await promise;
+      const events = groupDataByEventType(flatten(prepareDataForOutput(data.val())));
       const result = await Promise.all(generateOutputFiles(tableOutDir, events));
-      console.log('Output files created');
       const manifests = await Promise.all(generateOutputManifests(tableOutDir, bucketName, events));
-      console.log('Manifests created');
     }
+    // const data = await Promise.all(promises);
+    // for (const firebaseRecord of data) {
+    //   const events = groupDataByEventType(flatten(prepareDataForOutput(firebaseRecord.val())));
+    //   const result = await Promise.all(generateOutputFiles(tableOutDir, events));
+    //   const manifests = await Promise.all(generateOutputManifests(tableOutDir, bucketName, events));
+    // }
     console.log('Data downloaded!');
     process.exit(0);
   } catch(error) {
