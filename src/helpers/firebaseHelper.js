@@ -6,7 +6,6 @@ import isThere from 'is-there';
 import request from 'request-promise';
 import jsonfile from 'jsonfile';
 import { initializeApp } from 'firebase';
-import FirebasePaginator from 'firebase-paginator';
 import { getKeboolaStorageMetadata } from './keboolaHelper';
 import {
   size,
