@@ -86,16 +86,15 @@ export function generateOutputFiles(outputDirectory, data) {
 /**
  * This function generates output manifests which help to upload data into KBC
  */
-export function generateOutputManifests(outputDirectory, bucketName, data) {
-  return Object
-    .keys(data)
+export function generateOutputManifests(outputDirectory, bucketName, files) {
+  return files
     .map(key => {
       const {
         fileName,
         incremental,
         destination,
         manifestFileName
-      } = getKeboolaStorageMetadata(outputDirectory, bucketName, replace(key,'.', '_'));
+      } = getKeboolaStorageMetadata(outputDirectory, bucketName, key);
       return createManifestFile(manifestFileName, { destination, incremental });
     });
 }

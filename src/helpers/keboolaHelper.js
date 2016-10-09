@@ -1,5 +1,6 @@
 'use strict';
 import {
+  first,
   isNumber
 } from 'lodash';
 import {
@@ -87,10 +88,9 @@ export function parseConfiguration(configObject) {
  * This function prepares object containing metadata required for writing
  * output data into Keboola (output files & manifests).
  */
-export function getKeboolaStorageMetadata(tableOutDir, bucketName, tableName) {
+export function getKeboolaStorageMetadata(tableOutDir, bucketName, fileName) {
   const incremental = IS_INCREMENTAL;
-  const destination = `${bucketName}.${tableName}`;
-  const fileName = `${tableOutDir}/${tableName}.csv`;
-  const manifestFileName = `${fileName}.manifest`;
+  const destination = `${bucketName}.${first(fileName.split('.'))}`;
+  const manifestFileName = `${tableOutDir}/${fileName}.manifest`;
   return { fileName, incremental, destination, manifestFileName };
 }
