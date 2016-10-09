@@ -1,9 +1,9 @@
 import fs from 'fs';
 import csv from 'fast-csv';
 import path from 'path';
+import https from 'https';
 import moment from 'moment';
 import isThere from 'is-there';
-import request from 'request-promise';
 import jsonfile from 'jsonfile';
 import { initializeApp } from 'firebase';
 import { getKeboolaStorageMetadata } from './keboolaHelper';
@@ -15,49 +15,56 @@ import {
   replace,
   isNumber,
   toString,
-  includes
+  includes,
+  isUndefined
 } from 'lodash';
 import {
+  EVENT_END,
+  EVENT_DATA,
   EVENT_ERROR,
   EVENT_FINISH
 } from '../constants';
 
 /**
- * This function pass query for the Firebase and returns promise.
- */
-export function getFirebasePromise(query) {
-  return query.once('value');
-}
-
-/**
  * This function loop throught database and generate array of promises
  * which will be used later.
  */
-export function generateArrayOfPromises(pageCount, pageSize, keys, ref) {
-  const promises = [];
+export function generateDataArray({ apiKey, domain, endpoint, pageCount, pageSize, keys }) {
+  const data = [];
   for (let i = 0; i < pageCount; i++) {
     const key = keys[i * pageSize];
-    const promise = getFirebasePromise(ref.orderByKey().limitToFirst(pageSize).startAt(key));
-    promises.push(promise);
+    const limitToFirst = pageSize;
+    const startAt = key;
+    const shallow = false;
+    const promise = fetchData({ domain, endpoint, apiKey, limitToFirst, startAt, shallow });
+    data.push(promise);
   }
-  return promises;
+  return data;
 }
 
-/**
- * This function make the authorization to the Firebase.
- */
-export function authorization({  databaseURL, domain, clientEmail, privateKey }) {
-  return initializeApp({
-    databaseURL,
-    serviceAccount: { privateKey, clientEmail,  projectId: domain }
+
+export function fetchData({ domain, endpoint, apiKey, shallow, limitToFirst, startAt }) {
+  return new Promise((resolve, reject) => {
+    const url = getUrl({
+      domain,
+      apiKey,
+      shallow,
+      startAt,
+      endpoint,
+      limitToFirst
+    });
+    https.get(url, response => {
+      // Continuously update stream with data
+      let body = '';
+      response.on(EVENT_DATA, data => {
+          body += data;
+      });
+      response.on(EVENT_ERROR, error => reject(error));
+      response.on(EVENT_END, () => {
+        resolve(JSON.parse(body));
+      });
+    }).end();
   });
-}
-
-/**
- * This function request and endpoint and returns data for the further processing.
- */
-export function fetchFirebaseIds({ apiKey, domain, endpoint }) {
-  return request({ uri: `https://${domain}.firebaseio.com/${endpoint}.json?shallow=true&auth=${apiKey}`, json: true });
 }
 
 /**
@@ -145,7 +152,7 @@ export function prepareDataForOutput(data) {
 export function getParentData(object) {
   return Object.keys(object).reduce((previous, current) => {
     if (!isArray(object[current])) {
-      return { ...previous, [ current ] : object[current] };
+      return { ...previous, [ current ] : convertEpochToDateIfAvailable(object[current]) };
     }
   }, {});
 }
@@ -157,7 +164,9 @@ export function getParentData(object) {
  */
 export function convertEpochToDateIfAvailable(value) {
   return isNumber(value) && toString(value).length === 10
-    ? moment(value, 'X').utc().format("YYYY-MM-DD HH:mm:ss")
+    ? moment(value, 'X').utc().format("YYYY-MM-DD HH:mm:ss.SSS")
+    : isNumber(value) && toString(value).length === 13
+    ? moment(value, 'x').utc().format("YYYY-MM-DD HH:mm:ss.SSS")
     : value;
 }
 
@@ -181,7 +190,13 @@ export function normalizeOutput(data) {
   const parentObject = getParentData(data);
   return size(data['data']) > 0
     ? data['data'].map(event => {
-      return Object.assign({}, parentObject, convertArrayToStringIfAvailable(event))
+      const test = convertArrayToStringIfAvailable(event);
+      if (parentObject.eventType === 'entity.create') {
+        return Object.assign({}, parentObject, convertArrayToStringIfAvailable(event));
+      } else if (parentObject.eventType === 'entity.edit') {
+        const { intervall, key, valuePost, valuePre } = convertArrayToStringIfAvailable(event);
+        return Object.assign({}, parentObject, {intervall: isUndefined(intervall) ? '' : intervall, key, valuePost, valuePre});
+      }
     }) : null;
 }
 
@@ -207,4 +222,16 @@ export function mergeFirebaseIdWithObject(data) {
           return Object.assign({}, { ...object, firebaseId: element } )
         });
     });
+}
+
+/**
+ * This function compose url for further processing.
+ */
+export function getUrl({ domain, endpoint, limitToFirst, startAt, apiKey, shallow }) {
+  const baseUrl = `https://${domain}.firebaseio.com/${endpoint}.json`;
+  const authParam = `auth=${apiKey}`;
+  const params = !shallow
+    ? `orderBy=%22$key%22&limitToFirst=${parseInt(limitToFirst)}&startAt=%22${startAt}%22`
+    : 'shallow=true';
+  return `${baseUrl}?${params}&${authParam}`;
 }

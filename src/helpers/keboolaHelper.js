@@ -68,14 +68,7 @@ export function parseConfiguration(configObject) {
       reject('Parameter privateKey is not specified! Check out the documentation for more details!');
     }
 
-    // Read batch
-    const batch = configObject.get('parameters:batch') || DEFAULT_BATCH;
-    if (!batch.match(/firstHalf|secondHalf/)) {
-      reject('Invalid value of the parameter batch. Please specify either firstHalf or secondHalf');
-    }
-
     resolve({
-      batch,
       apiKey,
       domain,
       endpoint,
