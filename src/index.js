@@ -47,11 +47,12 @@ import { CONFIG_FILE, DEFAULT_TABLES_OUT_DIR } from './constants';
     const promises = generateDataArray({ apiKey, domain, endpoint, pageCount, pageSize, keys });
     console.log('promises: ', size(promises));
     for (const promise of promises) {
-      const events = groupDataByEventType(flatten(prepareDataForOutput(await promise)));
-      const result = await Promise.all(generateOutputFiles(tableOutDir, events));
+      console.log('New Promise');
+      // const events = groupDataByEventType(flatten(prepareDataForOutput(await promise)));
+      // const result = await Promise.all(generateOutputFiles(tableOutDir, events));
     }
     console.log('Data downloaded!');
-    const manifests = await Promise.all(generateOutputManifests(tableOutDir, bucketName, await fs.readdir(tableOutDir)));
+    // const manifests = await Promise.all(generateOutputManifests(tableOutDir, bucketName, await fs.readdir(tableOutDir)));
     console.log('Manifests created');
     process.exit(0);
   } catch(error) {
