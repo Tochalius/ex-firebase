@@ -1,12 +1,6 @@
-import fs from 'fs';
-import csv from 'fast-csv';
 import path from 'path';
 import https from 'https';
 import moment from 'moment';
-import isThere from 'is-there';
-import jsonfile from 'jsonfile';
-import { initializeApp } from 'firebase';
-import { getKeboolaStorageMetadata } from './keboolaHelper';
 import {
   size,
   first,
@@ -18,6 +12,16 @@ import {
   includes,
   isUndefined
 } from 'lodash';
+import {
+  initializeApp
+} from 'firebase';
+import {
+  createOutputFile,
+  createManifestFile
+} from './fsHelper';
+import {
+  getKeboolaStorageMetadata
+} from './keboolaHelper';
 import {
   EVENT_END,
   EVENT_DATA,
@@ -99,35 +103,6 @@ export function generateOutputManifests(outputDirectory, bucketName, files) {
     });
 }
 
-/**
- * This function just stores data to selected destination.
- * Data is appending to a file, the first one needs to have a header.
- */
-export function createOutputFile(fileName, data) {
-  return new Promise((resolve, reject) => {
-    const headers = !isThere(fileName);
-    const includeEndRowDelimiter = true;
-    csv
-      .writeToStream(fs.createWriteStream(fileName, {'flags': 'a'}), data, { headers, includeEndRowDelimiter })
-      .on(EVENT_ERROR, () => reject('Problem with writing data into output!'))
-      .on(EVENT_FINISH, () => resolve('File created!'));
-  });
-}
-
-/**
- * This function simply create a manifest file related to the output data
- */
-export function createManifestFile(fileName, data) {
-  return new Promise((resolve, reject) => {
-    jsonfile.writeFile(fileName, data, {}, (error) => {
-      if (error) {
-        reject(error);
-      } else {
-        resolve('Manifest created!');
-      }
-    });
-  });
-}
 
 /**
  * This function reads input data and prepare the output objects suitable for CSV output.
