@@ -40,8 +40,9 @@ import {
     const pageCount = keys.length / pageSize;
     const promises = firebase.generateDataArray({ apiKey, domain, endpoint, pageCount, pageSize, keys });
     // This part creates files in tmp directory
-    for (const promise of promises) {
-      const events = firebase.groupDataByEventType(flatten(firebase.prepareDataForOutput(await promise)));
+    for (let i = 0; i < promises.length; i++) {
+      console.log(i);
+      const events = firebase.groupDataByEventType(flatten(firebase.prepareDataForOutput(await promises[i])));
       const result = await Promise.all(firebase.generateOutputFiles(tmpDir, events));
     }
     const files = await fs.readdir(tmpDir);
