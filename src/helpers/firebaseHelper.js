@@ -67,7 +67,7 @@ export function fetchData({ domain, endpoint, apiKey, shallow, limitToFirst, sta
       response.on(EVENT_END, () => {
         resolve(JSON.parse(body));
       });
-    }).end();
+    });
   });
 }
 

@@ -32,29 +32,22 @@ import {
       databaseURL,
       storageBucket
     } = await parseConfiguration(getConfig(path.join(command.data, CONFIG_FILE)));
-    const tmp = await createTmpDirectory();
-    const tmpDir = tmp.path;
+    // const tmp = await createTmpDirectory();
+    // const tmpDir = tmp.path;
     const tableOutDir = path.join(command.data, DEFAULT_TABLES_OUT_DIR);
     const firebaseIds = await firebase.fetchData({ apiKey, domain, endpoint, shallow: true });
     const keys = Object.keys(firebaseIds).sort();
     const pageCount = keys.length / pageSize;
-    const promises = firebase.generateDataArray({ apiKey, domain, endpoint, pageCount, pageSize, keys });
-    // This part creates files in tmp directory
-    for (let i = 0; i < promises.length; i++) {
-      console.log(i);
-      const events = firebase.groupDataByEventType(flatten(firebase.prepareDataForOutput(await promises[i])));
-      const result = await Promise.all(firebase.generateOutputFiles(tmpDir, events));
+    const data = await Promise.all(firebase.generateDataArray({ apiKey, domain, endpoint, pageCount, pageSize, keys }));
+    console.log('Data ready!');
+    for (const element of data) {
+      const events = firebase.groupDataByEventType(flatten(firebase.prepareDataForOutput(element)));
+      const result = await Promise.all(firebase.generateOutputFiles(tableOutDir, events));
     }
-    const files = await fs.readdir(tmpDir);
-    const filePromises = files.map(file => transferFilesBetweenDirectories(tmpDir, tableOutDir, file));
-    // This loop uses streams to transfer the files from tmp directory intp data/out
-    for (const promise of filePromises) {
-      const result = await promise;
-      console.log(result);
-    }
-    const manifests = await Promise.all(firebase.generateOutputManifests(tableOutDir, bucketName, files));
+    console.log('Files created!')
+    const files = await fs.readdir(tableOutDir);
     console.log('Manifests created');
-    const clean = await rimraf(tmpDir);
+    const manifests = await Promise.all(firebase.generateOutputManifests(tableOutDir, bucketName, files));
     process.exit(0);
   } catch(error) {
     console.log(error);
