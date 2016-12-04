@@ -14,7 +14,7 @@
     "Extractor"
   ],
   "author": "Radek Tomasek <radek.tomasek@gmail.com>",
-  "license": "ISC",
+  "license": "NONE",
   "bugs": {
     "url": "https://github.com/radektomasek/keboola-ex-firebase/issues"
   },
